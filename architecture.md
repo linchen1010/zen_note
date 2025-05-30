@@ -37,6 +37,7 @@ zen_note/
 │   ├── rag.py                 # RAG logic (embedding search + LLM call)
 │   ├── model_runner.py        # Wrapper to call the local LLM
 │   ├── embeddings.py          # Markdown parsing + embeddings
+│   ├── config.py              # Configuration settings
 │   └── vector_store.faiss     # Saved FAISS index (optional precomputed)
 │
 ├── frontend/                  # Next.js UI
