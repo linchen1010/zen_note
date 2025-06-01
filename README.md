@@ -150,6 +150,163 @@ Current index performance:
 - **384-dimension** embeddings (all-MiniLM-L6-v2)
 - **High-quality semantic search** with relevance scoring
 
+#### Manual Index Rebuild Process
+
+When you add new markdown files or update existing ones, you need to rebuild the index:
+
+```bash
+# Rebuild index after content changes
+python3 scripts/build_index.py
+
+# The script will:
+# 1. Process all .md files in data/markdowns/
+# 2. Split documents into overlapping chunks (~1000 chars)
+# 3. Generate 384-dimension embeddings for each chunk
+# 4. Build FAISS index with cosine similarity search
+# 5. Save index + metadata to backend/ directory
+```
+
+**Important**: Always rebuild the index when:
+- ✅ Adding new markdown files
+- ✅ Updating existing markdown content
+- ✅ Changing chunking parameters
+- ✅ Switching embedding models
+
+## 🚀 Future Enhancements (v1 Requirements)
+
+### Dynamic Index Updates 🔄
+
+**Current State**: Manual rebuild required for any content changes
+
+**Proposed Dynamic System**:
+- **File Watcher**: Automatically detect changes to markdown files
+- **Incremental Updates**: Only re-index changed files instead of full rebuild
+- **Smart Chunking**: Detect which specific chunks changed within a file
+- **Background Processing**: Update index in background without service interruption
+- **Version Control**: Track index versions and rollback capability
+
+**Implementation Ideas**:
+```bash
+# File watcher service (future implementation)
+python3 scripts/watch_and_index.py --daemon
+
+# Incremental update (future implementation)  
+python3 scripts/build_index.py --incremental --changed-files file1.md,file2.md
+
+# Scheduled rebuilds (future implementation)
+python3 scripts/build_index.py --schedule hourly
+```
+
+### Flexible Input Sources 📚
+
+**Current State**: Only supports local markdown files
+
+**v1 Multi-Source Support**:
+- **Notion Integration**: Sync Notion pages and databases
+- **Google Docs**: Import shared documents
+- **Confluence**: Corporate wiki integration
+- **GitHub**: Pull markdown files from repositories
+- **Web Scraping**: Extract content from websites
+- **PDF Processing**: Convert PDFs to searchable text
+- **Email Archives**: Index email conversations
+
+**Proposed Architecture**:
+```
+Data Sources → Source Adapters → Common Format → Chunking → Vector Store
+     ↓              ↓              ↓           ↓         ↓
+  Notion        NotionAdapter    Markdown    Chunker   FAISS
+  GitHub        GitHubAdapter    Chunks      Embedder  Index
+  PDFs          PDFAdapter       Metadata    Storage   Search
+```
+
+**Configuration Example** (future):
+```yaml
+# config/sources.yaml
+sources:
+  - type: "notion"
+    workspace_id: "your-workspace"
+    auth_token: "env:NOTION_TOKEN"
+  - type: "github"
+    repo: "user/knowledge-repo"
+    path: "docs/"
+  - type: "local"
+    path: "data/markdowns/"
+```
+
+### Source Adapter Interface 🔌
+
+**Future Implementation**:
+```python
+# Abstract base class for all source adapters
+class SourceAdapter:
+    def fetch_documents(self) -> List[Document]
+    def detect_changes(self) -> List[str]
+    def get_metadata(self, doc_id: str) -> Dict
+```
+
+## 🔍 How RAG Queries Work
+
+**Your Question**: "When we do the query, what happened? Are we asking the LLM and LLM is querying our vector database?"
+
+**Answer**: Great question! Here's the exact flow:
+
+### Query Processing Pipeline 🔄
+
+```
+User Question → Vector Search → Context Retrieval → LLM Prompt → Response
+```
+
+**Step-by-Step Process**:
+
+1. **🔍 Query Vectorization**
+   ```
+   User: "What is RAG?"
+   ↓
+   Embedding Model converts question to 384-dim vector
+   ```
+
+2. **🎯 Vector Similarity Search**
+   ```
+   Query Vector → FAISS Index → Top K Similar Chunks
+   ↓
+   Returns: Most relevant text chunks from your markdown files
+   ```
+
+3. **📝 Context Assembly**
+   ```
+   System assembles prompt:
+   "Based on this context: [retrieved chunks]
+   Answer the user's question: What is RAG?"
+   ```
+
+4. **🤖 LLM Generation**
+   ```
+   Ollama (Mistral) receives:
+   - Your original question
+   - Relevant context from YOUR documents
+   ↓
+   Generates answer based on YOUR knowledge base
+   ```
+
+**Key Points**:
+- 🚫 **LLM doesn't query the vector DB** - that happens BEFORE the LLM
+- ✅ **Vector search finds relevant context first**
+- ✅ **LLM uses that context to answer your question**
+- 🎯 **This ensures answers are based on YOUR documents, not general training data**
+
+**Example Flow**:
+```
+Question: "What vector databases are mentioned?"
+↓
+Vector Search finds chunks mentioning: "FAISS, Pinecone, Weaviate, Chroma, Qdrant"
+↓
+LLM receives context + question
+↓
+Response: "Based on your documents, the vector databases mentioned are FAISS, Pinecone, Weaviate, Chroma, and Qdrant..."
+```
+
+This is why RAG is so powerful - it grounds the LLM's responses in your specific knowledge! 🚀
+
 ## 🔍 Troubleshooting
 
 ### Ollama Issues
