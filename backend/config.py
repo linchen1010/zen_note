@@ -18,7 +18,7 @@ FRONTEND_HOST = os.getenv("FRONTEND_HOST", "localhost")
 FRONTEND_PORT = int(os.getenv("FRONTEND_PORT", "3000"))
 
 # Vector Store Configuration
-VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "./backend/vector_store.faiss")
+VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "vector_store.faiss")
 EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL", "all-MiniLM-L6-v2")
 
 # Data Configuration
