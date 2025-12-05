@@ -15,7 +15,7 @@ numpy==2.2.5
 # Markdown processing
 markdown==3.8
 langchain==0.3.25
-langchain-community==0.3.24
+langchain-community==0.3.27
 
 # LLM integration
 ollama==0.5.1
